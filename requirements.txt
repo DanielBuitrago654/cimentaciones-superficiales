@@ -1,0 +1,7 @@
+flet[desktop]==1.1.2
+numpy==2.3.5
+scipy==1.16.3
+matplotlib==3.10.8
+docxtpl==0.20.1
+python-docx==1.2.0
+pytest==8.4.1
