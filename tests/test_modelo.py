@@ -7,7 +7,9 @@ import math
 import numpy as np
 import pytest
 
-from app.modelo import capacidad_ultima, factores_capacidad
+from app.modelo import (DatosCimentacion, asentamiento_quad, asentamiento_simpson,
+                        calcular, capacidad_ultima, carga_ultima, factores_capacidad,
+                        incremento_esfuerzo)
 from app.zapata import ZapataRectangular, presiones_contacto
 
 
@@ -74,3 +76,36 @@ def test_presiones_excentricidad_grande():
     assert q_max == pytest.approx(4 * P / (3 * L * (B - 2 * 0.5)))
 
 
+# 5. Boussinesq: límites conocidos
+def test_boussinesq_en_superficie_igual_a_q():
+    assert incremento_esfuerzo(100.0, 2.0, 2.0, 1e-4) == pytest.approx(100.0, rel=1e-3)
+
+
+def test_boussinesq_lejos_tiende_a_carga_puntual():
+    q, B, L, z = 100.0, 1.0, 1.0, 30.0
+    puntual = 3 * (q * B * L) / (2 * math.pi * z ** 2)
+    assert incremento_esfuerzo(q, B, L, z) == pytest.approx(puntual, rel=1e-2)
+
+
+# 6. Asentamiento: quad contra el promedio de Simpson de Das
+def test_asentamiento_quad_cercano_a_simpson():
+    d = DatosCimentacion()
+    assert asentamiento_quad(d) == pytest.approx(asentamiento_simpson(d), rel=0.10)
+
+
+# 7. brentq: en B_min el factor de seguridad es exactamente FS_req
+def test_ancho_minimo_cumple_fs():
+    d = DatosCimentacion()
+    r = calcular(d)
+    assert r.B_min is not None
+    assert carga_ultima(r.B_min, d) / d.P == pytest.approx(d.FS_req, rel=1e-3)
+
+
+# 8. Validación de datos
+def test_datos_invalidos_lanzan_error():
+    with pytest.raises(ValueError):
+        calcular(DatosCimentacion(B=3.0, L=2.0))       # B > L
+    with pytest.raises(ValueError):
+        calcular(DatosCimentacion(phi=60.0))           # φ fuera de rango
+    with pytest.raises(ValueError):
+        calcular(DatosCimentacion(M=2000.0))           # e ≥ B/2
