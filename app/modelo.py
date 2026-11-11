@@ -269,3 +269,41 @@ def presion_neta(d: DatosCimentacion):
     return max(d.P / (d.B * d.L) - d.gamma * d.Df, 0.0)
 
 
+def asentamiento_quad(d: DatosCimentacion):
+    """Asentamiento por consolidación primaria (mm) integrado con ``scipy.integrate.quad``.
+
+    s = ∫ [Cc/(1+e0)]·log10[(σ'0(z) + Δσ(z)) / σ'0(z)] dz,
+    con z desde el techo hasta la base del estrato de arcilla.
+
+    Integrar la deformación unitaria capa por capa es más preciso que usar
+    un único Δσ promedio, porque Δσ decae rápidamente con la profundidad.
+    """
+    q_n = presion_neta(d)
+    if q_n == 0:
+        return 0.0
+
+    def deformacion(z):
+        s0 = esfuerzo_efectivo_inicial(z, d)
+        ds = incremento_esfuerzo(q_n, d.B, d.L, z)
+        return d.Cc / (1 + d.e0) * np.log10((s0 + ds) / s0)
+
+    s, _ = integrate.quad(deformacion, d.z_arcilla, d.z_arcilla + d.H_arcilla)
+    return s * 1000
+
+
+def asentamiento_simpson(d: DatosCimentacion):
+    """Asentamiento (mm) con el método de Das: Δσ_prom = (Δσt + 4Δσm + Δσb)/6.
+
+    Sirve de comparación (validación) para el resultado de ``asentamiento_quad``.
+    """
+    q_n = presion_neta(d)
+    if q_n == 0:
+        return 0.0
+    z = d.z_arcilla + np.array([0.0, 0.5, 1.0]) * d.H_arcilla
+    dt, dm, db = incremento_esfuerzo(q_n, d.B, d.L, z)
+    ds_prom = (dt + 4 * dm + db) / 6
+    s0_medio = esfuerzo_efectivo_inicial(z[1], d)
+    s = d.Cc * d.H_arcilla / (1 + d.e0) * np.log10((s0_medio + ds_prom) / s0_medio)
+    return float(s * 1000)
+
+
