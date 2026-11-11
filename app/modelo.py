@@ -232,3 +232,40 @@ def carga_ultima(B, d: DatosCimentacion):
     return q_u * (B - 2 * e) * L
 
 
+# ---------------------------------------------------------------------------
+# Incremento de esfuerzo y asentamiento (Das [1] cap. 5)
+# ---------------------------------------------------------------------------
+def factor_esquina(m, n):
+    """Factor de influencia I de Boussinesq bajo la esquina de un rectángulo.
+
+    m = b/z, n = l/z (b y l: lados del rectángulo cargado). Expresión de
+    Newmark; se usa arctan2 para tomar la rama correcta cuando m²n² > m²+n²+1.
+    Acepta arreglos de NumPy.
+    """
+    m2, n2 = m ** 2, n ** 2
+    raiz = np.sqrt(m2 + n2 + 1)
+    termino1 = 2 * m * n * raiz / (m2 + n2 + m2 * n2 + 1) * (m2 + n2 + 2) / (m2 + n2 + 1)
+    termino2 = np.arctan2(2 * m * n * raiz, m2 + n2 + 1 - m2 * n2)
+    return (termino1 + termino2) / (4 * np.pi)
+
+
+def incremento_esfuerzo(q_neta, B, L, z):
+    """Δσ (kPa) bajo el CENTRO de un área B x L con presión uniforme q_neta.
+
+    Por superposición: el centro es la esquina común de 4 rectángulos de
+    B/2 x L/2. ``z`` (m, medida desde la base de la zapata) puede ser arreglo.
+    """
+    z = np.maximum(np.asarray(z, dtype=float), 1e-9)
+    return 4 * q_neta * factor_esquina((B / 2) / z, (L / 2) / z)
+
+
+def esfuerzo_efectivo_inicial(z, d: DatosCimentacion):
+    """σ'0 (kPa) a la profundidad z bajo la base: γ·(Df + z) (nivel freático profundo)."""
+    return d.gamma * (d.Df + np.asarray(z, dtype=float))
+
+
+def presion_neta(d: DatosCimentacion):
+    """Presión neta q_neta = P/(B·L) − γ·Df (kPa), nunca negativa."""
+    return max(d.P / (d.B * d.L) - d.gamma * d.Df, 0.0)
+
+
