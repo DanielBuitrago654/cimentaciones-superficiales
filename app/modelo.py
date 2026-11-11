@@ -8,7 +8,7 @@ Unidades (SI, consistentes en todo el módulo):
     ángulos en grados, asentamientos en mm (solo en el resultado final).
 
 Referencias:
-    [1] Das, B. M. Principios de ingeniería de cimentaciones, 7.ª ed.,
+    [1] Das, B. M. Fundamentos de ingeniería de cimentaciones, 7.ª ed.,
         Cengage, 2012. Cap. 3 (ecuación general de capacidad de carga,
         factores de forma, profundidad e inclinación; carga excéntrica,
         método del área efectiva de Meyerhof) y cap. 5 (incremento de
@@ -27,7 +27,7 @@ Hipótesis:
 from dataclasses import asdict, dataclass
 
 import numpy as np
-from scipy import integrate, optimize  # se usan desde el martes (quad y brentq)
+from scipy import integrate, optimize
 
 from app.zapata import presiones_contacto
 
@@ -232,6 +232,26 @@ def carga_ultima(B, d: DatosCimentacion):
     return q_u * (B - 2 * e) * L
 
 
+def ancho_minimo(d: DatosCimentacion, B_max=15.0):
+    """Ancho mínimo B (m) que cumple FS = FS_req, con ``scipy.optimize.brentq``.
+
+    Se busca la raíz de f(B) = Q_ult(B)/P − FS_req, manteniendo L/B constante.
+    f es creciente en B, así que hay una única raíz entre B_inf (apenas mayor
+    que 2e) y B_max. Retorna None si no hay cambio de signo en el intervalo.
+    """
+    e = d.M / d.P
+    B_inf = max(2 * e * 1.05, 0.10)
+
+    def f(B):
+        return float(carga_ultima(B, d)) / d.P - d.FS_req
+
+    if f(B_inf) > 0:
+        return B_inf
+    if f(B_max) < 0:
+        return None
+    return optimize.brentq(f, B_inf, B_max, xtol=1e-4)
+
+
 # ---------------------------------------------------------------------------
 # Incremento de esfuerzo y asentamiento (Das [1] cap. 5)
 # ---------------------------------------------------------------------------
@@ -307,3 +327,39 @@ def asentamiento_simpson(d: DatosCimentacion):
     return float(s * 1000)
 
 
+# ---------------------------------------------------------------------------
+# Cálculo completo
+# ---------------------------------------------------------------------------
+def calcular(d: DatosCimentacion):
+    """Ejecuta el cálculo completo y retorna un ``ResultadoCimentacion``.
+
+    Lanza ValueError con todos los mensajes si los datos no son válidos.
+    """
+    errores = d.validar()
+    if errores:
+        raise ValueError("\n".join(errores))
+
+    e = d.M / d.P
+    Nc, Nq, Ng = (float(x) for x in factores_capacidad(d.phi))
+    q_ult = float(capacidad_ultima(d.B, d.L, d.Df, d.gamma, d.c, d.phi, d.beta, e))
+    Q_ult = float(carga_ultima(d.B, d))
+    FS = Q_ult / d.P
+    q_max, q_min = presiones_contacto(d.P, d.M, d.B, d.L)
+    s_quad = asentamiento_quad(d)
+
+    return ResultadoCimentacion(
+        Nc=Nc, Nq=Nq, Ngamma=Ng, e=e, B_efectivo=d.B - 2 * e,
+        q_ult=q_ult, Q_ult=Q_ult, Q_adm=Q_ult / d.FS_req, FS=FS,
+        q_max=q_max, q_min=q_min, q_neta=presion_neta(d),
+        s_quad=s_quad, s_simpson=asentamiento_simpson(d),
+        B_min=ancho_minimo(d),
+        cumple_capacidad=FS >= d.FS_req,
+        cumple_asentamiento=s_quad <= d.s_adm,
+    )
+
+
+if __name__ == "__main__":
+    # Ejecución rápida sin interfaz: python -m app.modelo
+    datos = DatosCimentacion()
+    for clave, valor in calcular(datos).como_dict().items():
+        print(f"{clave:>20}: {valor}")
