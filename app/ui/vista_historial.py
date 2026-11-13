@@ -115,7 +115,7 @@ class VistaHistorial:
             title=ft.Text(f"Comparación de {len(filas)} cálculos"),
             content=ft.Column(
                 [self._tabla_comparacion(filas),
-                 ft.Image(src=figura_a_png(grafica_comparacion(filas)), width=900)],
+                 ft.Image(src=figura_a_png(grafica_comparacion(filas)), width=780)],
                 tight=True, scroll=ft.ScrollMode.AUTO, width=920,
             ),
             actions=[ft.TextButton("Cerrar", on_click=lambda ev: self.page.pop_dialog())],
