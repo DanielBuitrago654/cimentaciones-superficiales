@@ -361,7 +361,7 @@ def calcular(d: DatosCimentacion):
         B_min=ancho_minimo(d),
         cumple_capacidad=FS >= d.FS_req,
         cumple_asentamiento=s_quad <= d.s_adm,
-        cumple_presion=q_max <= q_ult / d.FS_req,
+        cumple_presion=bool(q_max <= q_ult / d.FS_req),   # bool de Python: numpy.bool_ no se guarda en JSON
     )
 
 

@@ -2,6 +2,7 @@
 
 Ejecutar desde la raíz del proyecto:  pytest -v
 """
+import json
 import math
 
 import numpy as np
@@ -116,6 +117,7 @@ def test_verificacion_presion_es_informativa():
     r = calcular(DatosCimentacion())
     assert r.q_perm == pytest.approx(r.q_ult / 3.0)
     assert r.cumple_presion                    # q_max = 315.6 kPa ≤ q_u/FS = 459.7 kPa
+    json.dumps(r.como_dict())                  # se puede guardar en SQLite (bool de Python, no numpy)
     r = calcular(DatosCimentacion(M=500))
     assert not r.cumple_presion                # q_max = 532.2 kPa > q_u/FS = 405.7 kPa
     assert r.cumple                            # pero FS y asentamiento sí cumplen
