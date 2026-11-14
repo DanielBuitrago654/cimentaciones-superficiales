@@ -13,7 +13,7 @@ from app.modelo import (DatosCimentacion, asentamiento_quad, asentamiento_simpso
 from app.zapata import ZapataRectangular, presiones_contacto
 
 
-# 1. Literatura: Das, Principios de ing. de cimentaciones, tabla 3.3 (Vesić)
+# 1. Literatura: Das, Fundamentos de ing. de cimentaciones, tabla 3.3 (Vesić)
 @pytest.mark.parametrize("phi, Nc, Nq, Ng", [
     (0, 5.14, 1.00, 0.00),
     (20, 14.83, 6.40, 5.39),
@@ -109,3 +109,13 @@ def test_datos_invalidos_lanzan_error():
         calcular(DatosCimentacion(phi=60.0))           # φ fuera de rango
     with pytest.raises(ValueError):
         calcular(DatosCimentacion(M=2000.0))           # e ≥ B/2
+
+
+# 9. Verificación informativa de presión de contacto (ensayo de la sustentación)
+def test_verificacion_presion_es_informativa():
+    r = calcular(DatosCimentacion())
+    assert r.q_perm == pytest.approx(r.q_ult / 3.0)
+    assert r.cumple_presion                    # q_max = 315.6 kPa ≤ q_u/FS = 459.7 kPa
+    r = calcular(DatosCimentacion(M=500))
+    assert not r.cumple_presion                # q_max = 532.2 kPa > q_u/FS = 405.7 kPa
+    assert r.cumple                            # pero FS y asentamiento sí cumplen
