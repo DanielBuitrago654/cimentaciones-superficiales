@@ -44,6 +44,8 @@ el área y la inercia de la planta obtenidas con **pysections**. Si $e>B/6$ se u
 distribución triangular $q_{max}=4P/[3L(B-2e)]$: parte de la base se despega ($q_{min}=0$).
 La app y la memoria lo informan como **advertencia** y no como incumplimiento, porque la
 capacidad portante ya se calcula con el área efectiva $B'=B-2e$.
+También se informa, como advertencia, si la presión máxima de contacto supera la presión
+permisible: $q_{max} \le q_u/FS$ (Das, ec. 3.12).
 
 ### 2.2 Asentamiento por consolidación (Das, cap. 5)
 
@@ -70,7 +72,7 @@ $$s=\int_{z_1}^{z_1+H}\frac{C_c}{1+e_0}\log_{10}\frac{\sigma'_0(z)+\Delta\sigma(
 
 ## 3. Validación
 
-`pytest` corre 23 pruebas (`tests/`). Las de validación del modelo son:
+`pytest` corre 24 pruebas (`tests/`). Las de validación del modelo son:
 
 | Caso | Fuente | Tolerancia |
 |---|---|---|
