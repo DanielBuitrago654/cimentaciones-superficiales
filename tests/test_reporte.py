@@ -25,7 +25,8 @@ def test_despegue_es_advertencia_y_no_contradice_la_conclusion(tmp_path):
     r = calcular(datos)
     assert r.cumple and hay_despegue(datos, r)
     estados = [f["estado"] for f in filas_verificaciones(datos, r)]
-    assert estados == ["CUMPLE", "CUMPLE", "ADVERTENCIA"]
+    # FS, asentamiento, presión máxima (532 > 406 kPa) y despegue
+    assert estados == ["CUMPLE", "CUMPLE", "ADVERTENCIA", "ADVERTENCIA"]
 
     calculo = {"id": 2, "proyecto": "Prueba", "ubicacion": "Bogotá",
                "descripcion": "Z-2", "fecha": "2026-11-09 10:00",

@@ -125,16 +125,22 @@ class ResultadoCimentacion:
     FS: float               # factor de seguridad obtenido, -
     q_max: float            # presión de contacto máxima, kPa
     q_min: float            # presión de contacto mínima, kPa
+    q_perm: float           # presión permisible q_u/FS_req (Das, ec. 3.12), kPa
     q_neta: float           # presión neta para asentamiento, kPa
     s_quad: float           # asentamiento integrado con scipy quad, mm
     s_simpson: float        # asentamiento con el promedio de Simpson de Das, mm
     B_min: float | None     # ancho mínimo que cumple FS_req (brentq), m
     cumple_capacidad: bool
     cumple_asentamiento: bool
+    cumple_presion: bool    # q_max ≤ q_perm; informativa, no entra en ``cumple``
 
     @property
     def cumple(self):
-        """True si la zapata cumple capacidad portante y asentamiento."""
+        """True si la zapata cumple capacidad portante y asentamiento.
+
+        La verificación q_max ≤ q_u/FS (``cumple_presion``) solo se informa: la
+        capacidad ya se revisa con el área efectiva de Meyerhof (FS = Q_ult/P).
+        """
         return self.cumple_capacidad and self.cumple_asentamiento
 
     def como_dict(self):
@@ -350,11 +356,12 @@ def calcular(d: DatosCimentacion):
     return ResultadoCimentacion(
         Nc=Nc, Nq=Nq, Ngamma=Ng, e=e, B_efectivo=d.B - 2 * e,
         q_ult=q_ult, Q_ult=Q_ult, Q_adm=Q_ult / d.FS_req, FS=FS,
-        q_max=q_max, q_min=q_min, q_neta=presion_neta(d),
+        q_max=q_max, q_min=q_min, q_perm=q_ult / d.FS_req, q_neta=presion_neta(d),
         s_quad=s_quad, s_simpson=asentamiento_simpson(d),
         B_min=ancho_minimo(d),
         cumple_capacidad=FS >= d.FS_req,
         cumple_asentamiento=s_quad <= d.s_adm,
+        cumple_presion=bool(q_max <= q_ult / d.FS_req),   # bool de Python: numpy.bool_ no se guarda en JSON
     )
 
 

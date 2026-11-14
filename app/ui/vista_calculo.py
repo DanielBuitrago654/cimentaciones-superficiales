@@ -122,6 +122,7 @@ class VistaCalculo:
             ("Carga última / admisible", f"{r.Q_ult:,.0f} / {r.Q_adm:,.0f}", "kN"),
             ("Factor de seguridad", f"{r.FS:.2f}  (requerido {datos.FS_req:g})", ""),
             ("Presión de contacto máx / mín", f"{r.q_max:.1f} / {r.q_min:.1f}", "kPa"),
+            ("Presión permisible q_u/FS", f"{r.q_perm:.1f}", "kPa"),
             ("Asentamiento quad (Simpson)", f"{r.s_quad:.1f}  ({r.s_simpson:.1f})", "mm"),
             ("B mínimo por capacidad (brentq)",
              f"{r.B_min:.2f}" if r.B_min is not None else "fuera de rango", "m"),
@@ -134,8 +135,13 @@ class VistaCalculo:
             t for t, ok in [("capacidad portante", r.cumple_capacidad),
                             ("asentamiento", r.cumple_asentamiento)] if not ok)
         self.estado.color = ft.Colors.GREEN_700 if r.cumple else ft.Colors.RED_700
+        advertencias = []
+        if not r.cumple_presion:
+            advertencias.append("q_max > q_u/FS")
         if hay_despegue(datos, r):
-            self.estado.value += "  ·  Advertencia: e > B/6, parte de la base se despega"
+            advertencias.append("e > B/6, parte de la base se despega")
+        if advertencias:
+            self.estado.value += "  ·  Advertencia: " + "; ".join(advertencias)
             if r.cumple:
                 self.estado.color = ft.Colors.ORANGE_800
         self.estado.italic = False

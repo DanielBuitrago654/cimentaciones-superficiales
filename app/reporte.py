@@ -48,6 +48,7 @@ def filas_resultados(r):
         ("Carga admisible", "Q_adm", r.Q_adm, "kN"),
         ("Presión de contacto máxima", "q_max", r.q_max, "kPa"),
         ("Presión de contacto mínima", "q_min", r.q_min, "kPa"),
+        ("Presión permisible q_u/FS", "q_perm", r.q_perm, "kPa"),
         ("Presión neta", "q_neta", r.q_neta, "kPa"),
         ("Asentamiento (quad)", "s", r.s_quad, "mm"),
         ("Asentamiento (Simpson, Das)", "s_S", r.s_simpson, "mm"),
@@ -68,7 +69,7 @@ def hay_despegue(datos, r):
 
 
 def filas_verificaciones(datos, r):
-    """Chequeos de la memoria: cumple / no cumple, y la advertencia de despegue."""
+    """Chequeos de la memoria: cumple / no cumple, y las advertencias (presión y despegue)."""
     def estado(ok):
         return "CUMPLE" if ok else "NO CUMPLE"
 
@@ -77,6 +78,9 @@ def filas_verificaciones(datos, r):
          "limite": f"≥ {_fmt(datos.FS_req)}", "estado": estado(r.cumple_capacidad)},
         {"nombre": "Asentamiento total (mm)", "obtenido": _fmt(r.s_quad, 1),
          "limite": f"≤ {_fmt(datos.s_adm, 1)}", "estado": estado(r.cumple_asentamiento)},
+        {"nombre": "Presión máxima de contacto (kPa)", "obtenido": _fmt(r.q_max, 1),
+         "limite": f"≤ q_u/FS = {_fmt(r.q_perm, 1)}",
+         "estado": "CUMPLE" if r.cumple_presion else "ADVERTENCIA"},
         {"nombre": "Excentricidad sin despegue de la base (m)", "obtenido": _fmt(r.e, 3),
          "limite": f"≤ B/6 = {_fmt(datos.B / 6, 3)}",
          "estado": "ADVERTENCIA" if hay_despegue(datos, r) else "CUMPLE"},
