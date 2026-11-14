@@ -175,3 +175,20 @@ con los 4 vértices de la planta; pysections entrega el área y la inercia `Izz`
 (= L·B³/12) que se usan para las presiones de contacto. Como `sections.py` activa el
 estilo `ggplot` de Matplotlib al importarse, `graficas.py` fija explícitamente el fondo blanco.
 Por usar código GPL-3.0, este proyecto se distribuye con la misma licencia.
+
+## 7. Referencias
+
+- Das, B. M. (2012). *Fundamentos de ingeniería de cimentaciones* (7.ª ed.; J. León Cárdenas, Trad.). Cengage Learning. Traducción de *Principles of Foundation Engineering* (7th ed.).
+- Vesić, A. S. (1973). Analysis of ultimate loads of shallow foundations. *J. Soil Mech. Found. Div.*, ASCE, 99(1), 45–73.
+- Meyerhof, G. G. (1963). Some recent research on the bearing capacity of foundations. *Canadian Geotechnical Journal*, 1(1), 16–26.
+- AIS (2010). *Reglamento Colombiano de Construcción Sismo Resistente NSR-10*, Título H.
+- Ramírez Vargas, C. D. (2025). *pysections*. https://github.com/rvcristiand/pysections
+
+## 8. Autores
+
+| Integrante | Código | Responsabilidad principal |
+|---|---|---|
+| David Ernesto Bohórquez Lozano | 20242579031 | Modelo de ingeniería, pysections, gráficas, pruebas del modelo |
+| Daniel Andres Buitrago Capera | 20241579042 | Base de datos, memoria docxtpl, interfaz Flet, comparación, empaquetado |
+
+Licencia: GNU GPL v3.0 (ver `LICENSE`).
